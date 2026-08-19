@@ -1,0 +1,470 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fila do Financeiro — Antares</title><style>
+:root{--bg:#f0eeec;--sf:#fbfaf9;--ink:#1d1917;--mut:#756b65;--ru:#d8d2cd;--ac:#a83b1c;--ok:#1f6b4a;--cr:#8c1d28;--wa:#8a5b00;--zap:#128c4b}
+@media(prefers-color-scheme:dark){:root{--bg:#141211;--sf:#1d1a18;--ink:#efe9e5;--mut:#9a908a;--ru:#35302c;--ac:#e4693f;--ok:#63bc91;--cr:#e4707c;--wa:#d9a441;--zap:#2fae6e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+.w{max-width:840px;margin:0 auto;padding:20px 14px 70px}
+h1{font:600 22px/1.2 Georgia,'Times New Roman',serif;margin:0 0 3px}
+.sub{color:var(--mut);font-size:13px;margin:0 0 16px}
+.topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.acoes{display:flex;gap:8px;flex-wrap:wrap}
+.acoes button{padding:9px 14px}
+.abas{display:flex;gap:6px;margin:0 0 18px;border-bottom:1px solid var(--ru)}
+.aba{padding:9px 15px;border:none;border-bottom:2px solid transparent;background:none;color:var(--mut);font:600 14px system-ui;cursor:pointer;border-radius:0}
+.aba:hover{color:var(--ink);border-color:var(--ru)}
+.aba.on{color:var(--ac);border-color:var(--ac)}
+.card{background:var(--sf);border:1px solid var(--ru);border-radius:6px;padding:15px;margin-bottom:0}
+/* linha separando um cartao do outro — sem ela a fila vira uma parede so */
+.card+.card{margin-top:30px;position:relative}
+.card+.card::before{content:'';position:absolute;left:-14px;right:-14px;top:-16px;border-top:1px solid var(--ru)}
+/* divisoria de grupo: o corte forte, por acao a tomar */
+.secao{margin:36px 0 16px;padding-top:20px;border-top:2px solid var(--ac)}
+.secao:first-child{margin-top:6px;padding-top:0;border-top:none}
+.secao h2{font:600 15px/1.3 Georgia,'Times New Roman',serif;margin:0;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.secao .conta{font:600 11px ui-monospace,Consolas,monospace;background:var(--ac);color:#fff;padding:3px 8px;border-radius:11px;letter-spacing:.04em}
+.secao .dica{color:var(--mut);font-size:12.5px;margin-top:5px}
+.s-assuma{border-color:var(--cr)}.s-assuma .conta{background:var(--cr)}
+.s-pronto{border-color:var(--ok)}.s-pronto .conta{background:var(--ok)}
+.s-semcadastro{border-color:var(--ru)}.s-semcadastro .conta{background:var(--mut)}
+.top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:9px}
+.tag{font:600 10px/1 ui-monospace,Consolas,monospace;letter-spacing:.09em;text-transform:uppercase;padding:5px 8px;border-radius:3px;background:var(--ru);color:var(--ink);white-space:nowrap}
+.t-rescisao{background:#f5dfe1;color:#8c1d28}.t-negociacao{background:#f5e9d2;color:#8a5b00}
+.t-comprovante{background:#dfede6;color:#1f6b4a}.t-juridico{background:#8c1d28;color:#fff}
+.t-pedir_texto{background:#e1e5e9;color:#46525e}
+@media(prefers-color-scheme:dark){.t-rescisao{background:#331519;color:#e4707c}.t-negociacao{background:#2e2312;color:#d9a441}.t-comprovante{background:#16291f;color:#63bc91}.t-pedir_texto{background:#1e262d;color:#93a3b2}}
+.quem{font-weight:600;font-size:15.5px}.meta{color:var(--mut);font-size:12.5px;margin-top:2px}
+.ficha{margin:11px 0;padding:10px 12px;background:var(--bg);border:1px solid var(--ru);border-radius:5px}
+.fl{display:grid;grid-template-columns:78px 1fr;gap:10px;padding:3px 0;font-size:13px}
+.fl+.fl{border-top:1px solid var(--ru)}
+.fr{color:var(--mut);font:600 10.5px/1.7 ui-monospace,Consolas,monospace;letter-spacing:.07em;text-transform:uppercase}
+.fv{line-height:1.5}
+.fnota{color:var(--wa);font-size:11.5px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--ru)}
+.semficha{margin:11px 0;padding:9px 12px;border:1px dashed var(--ru);border-radius:5px;color:var(--mut);font-size:12.5px}
+@media(max-width:480px){.fl{grid-template-columns:1fr;gap:0}.fr{line-height:1.4}}
+.rec{border-left:3px solid var(--ru);padding:8px 12px;margin:10px 0;color:var(--mut);font-size:14px;white-space:pre-wrap;background:var(--bg);border-radius:0 4px 4px 0}
+textarea{width:100%;min-height:160px;padding:11px;border:1px solid var(--ru);border-radius:4px;background:var(--bg);color:var(--ink);font:14px/1.55 system-ui;resize:vertical}
+textarea.nota{min-height:52px;border-style:dashed}
+.bts{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+button{font:600 13px system-ui;padding:10px 15px;border-radius:4px;border:1px solid var(--ru);background:var(--sf);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--ac)}button.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+button.no{color:var(--cr)}button:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+button.zap{background:var(--zap);border-color:var(--zap);color:#fff}
+.manuais{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px;padding-top:11px;border-top:1px dashed var(--ru)}
+.manuais button{padding:8px 12px;font-weight:500}
+.dica{color:var(--mut);font-size:12px;margin-top:11px}
+.conversa{margin-top:12px;padding:12px;border:1px solid var(--ru);border-radius:5px;background:var(--bg);max-height:380px;overflow-y:auto}
+.msg{margin-bottom:9px;font-size:13.5px;line-height:1.45}
+.msg .quando{color:var(--mut);font-size:11px;font-family:ui-monospace,Consolas,monospace}
+.msg.dela{border-left:3px solid var(--ac);padding-left:9px}
+.msg.nossa{border-left:3px solid var(--ru);padding-left:9px;color:var(--mut)}
+.msg.achado{background:rgba(168,59,28,.10);border-radius:0 4px 4px 0;padding:6px 9px}
+.semtexto{font-style:italic;color:var(--mut)}
+.marco{border:1px solid var(--ac);border-left:3px solid var(--ac);border-radius:4px;padding:9px 11px;margin:10px 0;font-size:13.5px}
+.arq{display:none}
+.notabox{margin-top:12px;padding-top:12px;border-top:1px dashed var(--ru)}
+.rot{font:600 12px system-ui;color:var(--mut);margin-bottom:6px;display:block}
+.atalhos{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}
+.atalhos button{padding:5px 10px;font:500 12px system-ui;color:var(--mut)}
+.salvo{color:var(--ok);font-size:12px;margin-left:8px}
+input{width:100%;padding:12px;border:1px solid var(--ru);border-radius:4px;background:var(--sf);color:var(--ink);font:16px system-ui}
+.aviso{border:1px solid var(--cr);border-left:3px solid var(--cr);border-radius:4px;padding:10px 12px;margin:10px 0;font-size:13.5px}
+.vazio{text-align:center;color:var(--mut);padding:60px 20px}
+.feito{color:var(--mut);font-size:13px;padding:4px 0}
+.rlinha{display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--ru)}
+.rlinha:last-child{border:none}
+.rtxt{flex:1;white-space:pre-wrap;font-size:14.5px}
+.rtxt.ok{color:var(--mut);text-decoration:line-through}
+.rdata{color:var(--mut);font-size:11.5px;margin-top:3px}
+.pill{font:600 10px ui-monospace,Consolas,monospace;padding:3px 7px;border-radius:3px;background:var(--ru);color:var(--ink)}
+.confbox{border:1px solid var(--ru);border-radius:6px;padding:12px 14px;margin:0 0 16px;background:var(--sf)}
+.confbox .rot{margin-bottom:0}
+/* recolhido: uma linha só. Seis barras zeradas não merecem meia tela. */
+.cabeca{display:flex;align-items:baseline;gap:9px;width:100%;padding:0;border:none;background:none;
+  text-align:left;cursor:pointer;flex-wrap:wrap}
+.cabeca:hover{border:none}.cabeca:hover .cresumo{color:var(--ink)}
+.seta{color:var(--mut);font-size:11px;line-height:1.6}
+.cresumo{color:var(--mut);font-size:12.5px;font-weight:400}
+.ccorpo{margin-top:10px}
+.confbox.fechado .ccorpo{display:none}
+.confbox.fechado{padding:10px 14px}
+.clinha{display:flex;align-items:center;gap:10px;padding:5px 0;font-size:13px}
+.cnome{min-width:110px;font-weight:600}
+.cbar{flex:1;height:7px;border-radius:4px;background:var(--ru);overflow:hidden;max-width:220px}
+.cbar i{display:block;height:100%;background:var(--ac);border-radius:4px}
+.clinha.livre .cbar i{background:var(--ok)}
+.cnum{color:var(--mut);font:600 11.5px ui-monospace,Consolas,monospace;white-space:nowrap}
+.cselo{font:600 10px ui-monospace,Consolas,monospace;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:3px;background:var(--ok);color:#fff;white-space:nowrap}
+.cauto{font-size:11.5px;color:var(--ok);font-weight:600;white-space:nowrap}
+</style></head><body><div class="w">
+<div class="topo">
+  <div>
+    <h1>Fila do Financeiro</h1>
+    <p class="sub" id="sub">Nada sai daqui sem você aprovar.</p>
+  </div>
+  <div class="acoes">
+    <button id="btAtualizar" title="Recarrega a fila do servidor">Atualizar</button>
+    <button class="ok" id="btAvisar" title="Marca que há observações novas para o Claude processar">Avisar o Claude</button>
+  </div>
+</div>
+<div id="login" style="display:none">
+  <p class="sub">Senha da fila — está no Supabase, tabela <b>config</b>, chave <b>senha_fila</b>.</p>
+  <input id="senha" type="password" placeholder="senha" autocomplete="current-password">
+  <div class="bts"><button class="ok" id="btEntrar">Entrar</button></div>
+</div>
+<div id="app" style="display:none">
+  <div class="abas">
+    <button class="aba on" id="abaFila">Mensagens</button>
+    <button class="aba" id="abaObs">Observações</button>
+  </div>
+  <div id="conf"></div>
+  <div id="lista"></div>
+  <div id="obs" style="display:none">
+    <p class="sub">Escreva aqui o que eu preciso saber ou fazer — número que não existe no WhatsApp,
+    divergência de cadastro, cobrança que precisa ser refeita, o que for. Eu leio antes de cada rodada.</p>
+    <textarea id="novoRecado" placeholder="Ex.: o telefone da Kézia não tem WhatsApp, pegar outro com o polo" style="min-height:90px"></textarea>
+    <div class="bts"><button class="ok" id="btRecado">Anotar recado</button></div>
+    <div id="recados" style="margin-top:22px"></div>
+  </div>
+</div></div>
+<script>
+const API='https://kvjtllhqhfqxblizmvce.supabase.co/functions/v1/fila';
+let S=localStorage.getItem('sf')||'';
+let ULTIMO={itens:[],recados:[]};
+const $=id=>document.getElementById(id);
+function esc(t){const d=document.createElement('div');d.textContent=t==null?'':String(t);return d.innerHTML}
+function brl(n){return 'R$ '+Number(n).toFixed(2).replace('.',',')}
+// o cadastro vem todo em CAIXA ALTA; ler nome de gente gritando cansa a vista
+function bonito(n){const m=['de','da','do','das','dos','e'];
+  return String(n==null?'':n).trim().toLowerCase().split(/\s+/)
+    .map((p,i)=>(i>0&&m.indexOf(p)>=0)?p:p.charAt(0).toUpperCase()+p.slice(1)).join(' ')}
+function dataBr(iso){if(!iso)return '';const d=new Date(iso);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+async function api(acao,extra){
+  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({senha:S,acao},extra||{}))});
+  return await r.json();
+}
+async function copiar(botao,texto){
+  try{await navigator.clipboard.writeText(texto)}
+  catch(e){const t=document.createElement('textarea');t.value=texto;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}
+  const antes=botao.textContent;botao.textContent='Copiado ✓';
+  setTimeout(()=>{botao.textContent=antes},1600);
+}
+$('btEntrar').addEventListener('click',()=>{S=$('senha').value;localStorage.setItem('sf',S);carregar()});
+$('senha').addEventListener('keydown',e=>{if(e.key==='Enter')$('btEntrar').click()});
+$('abaFila').addEventListener('click',()=>trocarAba('fila'));
+$('abaObs').addEventListener('click',()=>trocarAba('obs'));
+function trocarAba(qual){
+  const ehFila=qual==='fila';
+  $('abaFila').classList.toggle('on',ehFila);$('abaObs').classList.toggle('on',!ehFila);
+  $('lista').style.display=ehFila?'block':'none';
+  $('obs').style.display=ehFila?'none':'block';
+}
+$('btAtualizar').addEventListener('click',async()=>{
+  const b=$('btAtualizar');const antes=b.textContent;b.textContent='Atualizando...';
+  await carregar();
+  b.textContent='Atualizado ✓';setTimeout(()=>{b.textContent=antes},1500);
+});
+// Marca que há coisa nova pra eu processar. Não me acorda sozinho: fica
+// registrado aqui e é a primeira coisa que eu leio quando voltar ao trabalho.
+$('btAvisar').addEventListener('click',async()=>{
+  const b=$('btAvisar');const antes=b.textContent;b.textContent='Avisando...';
+  const notas=(ULTIMO.itens||[]).filter(i=>i.nota&&i.nota.trim()).length;
+  const r=await api('recado',{texto:'REVISAR — o Felipe pediu uma passada na fila em '
+    +new Date().toLocaleString('pt-BR')+'. Cartões com observação agora: '+notas+'.'});
+  if(r&&r.ok){b.textContent='Avisado ✓';await carregar();setTimeout(()=>{b.textContent=antes},2500)}
+  else {b.textContent=antes;alert('Erro: '+((r&&r.erro)||'desconhecido'))}
+});
+$('btRecado').addEventListener('click',async()=>{
+  const t=$('novoRecado').value.trim();
+  if(!t)return;
+  const r=await api('recado',{texto:t});
+  if(r&&r.ok){$('novoRecado').value='';carregar();trocarAba('obs')}
+  else alert('Erro: '+((r&&r.erro)||'desconhecido'));
+});
+async function carregar(){
+  let r;
+  try{r=await api('listar')}catch(e){$('sub').textContent='Sem conexão com o servidor.';return}
+  if(r.erro==='senha'){$('login').style.display='block';$('app').style.display='none';$('sub').textContent='Digite a senha para ver a fila.';return}
+  $('login').style.display='none';$('app').style.display='block';
+  ULTIMO=r;
+  desenharConfianca(r.confianca||[],r.libera||10);
+  desenharFila(r);
+  desenharRecados(r.recados||[]);
+}
+// Quanto falta para o agente poder trabalhar sozinho em cada assunto.
+// Sobe so com aprovacao SEM edicao; editar zera; descartar ou assumir revoga.
+function desenharConfianca(conf,libera){
+  const C=$('conf');
+  const uteis=conf.filter(c=>c.categoria!=='teste');
+  if(!uteis.length){C.innerHTML='';return}
+  const linhas=uteis.map(c=>{
+    const nunca=(c.categoria==='juridico');
+    const seq=Number(c.sequencia||0);
+    const pct=nunca?0:Math.min(100,Math.round(seq/libera*100));
+    const dir=c.autonoma
+      ? '<span class="cselo">sozinho</span>'
+      : nunca ? '<span class="cnum">nunca automático</span>'
+      : '<span class="cnum">'+seq+'/'+libera+'</span>';
+    const extra=c.autonoma&&Number(c.enviadas_sozinho||0)
+      ? '<span class="cauto">'+c.enviadas_sozinho+' enviadas · '+(c.amostradas||0)+' conferidas</span>':'';
+    return '<div class="clinha'+(c.autonoma?' livre':'')+'"><span class="cnome">'+esc(c.categoria)+'</span>'
+      +'<span class="cbar"><i style="width:'+(c.autonoma?100:pct)+'%"></i></span>'+dir+extra+'</div>';
+  }).join('');
+  // Enquanto tudo está em 0/10 o painel é peso morto: seis barras vazias comendo
+  // um terço da primeira tela. Fica recolhido numa linha até haver o que ver.
+  const andando=uteis.filter(c=>c.categoria!=='juridico'&&(c.autonoma||Number(c.sequencia||0)>0));
+  const livres=uteis.filter(c=>c.autonoma).length;
+  const resumo=livres?(livres+' assunto(s) rodando sozinho')
+    :andando.length?(andando.length+' assunto(s) com progresso')
+    :'nenhum assunto liberado ainda — tudo passa por você';
+  const aberto=localStorage.getItem('conf_aberto')==='1'||andando.length>0;
+  C.innerHTML='<div class="confbox'+(aberto?'':' fechado')+'" id="confbox">'
+    +'<button class="cabeca" id="conftoggle"><span class="seta">'+(aberto?'▾':'▸')+'</span>'
+    +'<span class="rot" style="margin:0">Confiança por assunto</span>'
+    +'<span class="cresumo">'+esc(resumo)+'</span></button>'
+    +'<div class="ccorpo">'+linhas
+    +'<div class="dica" style="margin-top:9px">São '+libera+' aprovações sem edição para liberar. '
+    +'Editar antes de aprovar zera o contador. Descartar ou marcar "isso é comigo" revoga. '
+    +'Jurídico e não identificado nunca entram.</div></div></div>';
+  $('conftoggle').addEventListener('click',()=>{
+    const b=$('confbox'),f=b.classList.toggle('fechado');
+    b.querySelector('.seta').textContent=f?'▸':'▾';
+    localStorage.setItem('conf_aberto',f?'0':'1');
+  });
+}
+function desenharFila(r){
+  const L=$('lista');
+  const abertos=(r.recados||[]).filter(x=>x.status==='aberto').length;
+  if(!r.itens||!r.itens.length){
+    L.innerHTML='<div class="vazio">Nenhuma mensagem esperando.<br>Tudo em dia.</div>';
+    $('sub').textContent=(r.decididos?(r.decididos+' já decididas.'):'Nada pendente.')+(abertos?(' · '+abertos+' recado(s) para o Claude.'):'');
+    return;
+  }
+  $('sub').textContent=r.itens.length+' mensagem(ns) esperando você.'+(abertos?(' · '+abertos+' recado(s) para o Claude.'):'');
+  // Um cartao vira HTML aqui; quem agrupa e o trecho logo abaixo.
+  const desenharCartao=i=>{
+    const ctx=i.contexto||{};const f=i.ficha||null;
+    const soVoce=(i.categoria==='juridico');   // caso que nunca sai pela fila
+    // Quem PAGA encabeça o cartão. O aluno é criança e entra como objeto do
+    // contrato, nunca como quem deve — mesma regra que vale nas mensagens.
+    const titulo=(f&&f.responsavel)?esc(bonito(f.responsavel))
+      :(i.nome_perfil?esc(i.nome_perfil):'<span style="color:var(--cr)">Não identificado</span>');
+    let ficha='';
+    if(f){
+      const li=(r,v)=>v?('<div class="fl"><span class="fr">'+r+'</span><span class="fv">'+v+'</span></div>'):'';
+      const lugar=[f.polo,f.cidade].filter(Boolean).filter((x,n,a)=>a.indexOf(x)===n).map(x=>esc(bonito(x))).join(' &middot; ');
+      const contrato=[(f.parcelas&&f.valorParcela)?(String(f.parcelas).replace(/\D/g,'')+'× '+brl(f.valorParcela)):'',
+        f.forma?bonito(f.forma):''].filter(Boolean).map(esc).join(' &middot; ');
+      const pend=f.valorVencido>0
+        ?('<b style="color:var(--cr)">'+brl(f.valorVencido)+' em aberto</b>'+(f.vencidas?(' &middot; '+f.vencidas+' parcela(s) vencida(s)'):''))
+        :(f.pagas?('em dia &middot; '+f.pagas+' paga(s)'):'');
+      ficha='<div class="ficha">'
+        +li('Aluno',(f.alunos||[]).map(n=>esc(bonito(n))).join('<br>'))
+        +li('Polo',lugar)
+        +li('Turma',f.turma?esc(bonito(f.turma)):'')
+        +li('Contrato',contrato)
+        +li('Situação',f.situacao?esc(f.situacao):'')
+        +li('Financeiro',pend)
+        +(f.porTelefone?'<div class="fnota">Cadastro casado pelo telefone — o cartão não guardava o aluno. Confira se é a pessoa certa.</div>':'')
+        +'</div>';
+    }else if(i.identificado===false){
+      ficha='<div class="semficha">Sem cadastro casado com este número.</div>';
+    }
+    let al2='';
+    if(i.categoria==='juridico')al2='Cita advogado, PROCON ou processo. Assuma pessoalmente.';
+    else if(!i.identificado)al2='Não consegui identificar de quem é este número. Confira antes de responder.';
+    else if(i.confianca==='baixa')al2='Confiança baixa na leitura. Revise com calma.';
+    let alerta=al2?('<div class="aviso">'+al2+'</div>'):'';
+    // segurado pela amostragem: a categoria ja e autonoma, mas 1 a cada 5 passa por voce
+    if(i.amostra)alerta='<div class="marco">Conferência de amostra — esta categoria já está liberada, '
+      +'mas uma a cada cinco continua vindo para você olhar. Se estiver boa, é só aprovar.</div>'+alerta;
+    const rec=i.texto_recebido?esc(i.texto_recebido):('('+esc(i.tipo_recebido)+' — sem texto)');
+    // A conta de rescisão roda em todo cartão, mas só faz sentido mostrar em
+    // quem pediu para encerrar. Num cartão de negociação ela só confunde.
+    const tx=(i.categoria==='rescisao'&&ctx.rescisao&&ctx.rescisao.aplicavel)
+      ?('<div class="meta" style="margin-top:8px">Taxa calculada pelo motor: <b>'+brl(ctx.rescisao.taxa)+'</b> — confira antes de usar</div>'):'';
+    return '<div class="card" id="c'+i.id+'"><div class="top"><div><div class="quem">'+titulo+'</div>'
+      +'<div class="meta">'+esc(i.telefone)+(i.nome_perfil?(' &middot; perfil “'+esc(i.nome_perfil)+'”'):'')+'</div></div>'
+      +'<span class="tag t-'+esc(i.categoria)+'">'+esc(i.categoria)+'</span></div>'
+      +ficha+tx+alerta+'<div class="rec">'+rec+'</div>'
+      +'<textarea id="t'+i.id+'">'+esc(i.resposta_proposta)+'</textarea>'
+      +'<div class="manuais"><span class="rot">'+(soVoce
+        ?'Este texto é um resumo do caso para você — não é mensagem para enviar'
+        :'Se preferir mandar você mesmo — a mensagem vai para a área de transferência, cole com Ctrl+V')+'</span></div>'
+      +'<div class="manuais" style="border-top:none;padding-top:0;margin-top:7px">'
+      +'<button class="'+(soVoce?'':'zap')+'" data-zap="'+i.id+'" data-tel="'+esc(i.telefone)+'">'
+      +(soVoce?'Abrir a conversa no WhatsApp':'Copiar e abrir no WhatsApp')+'</button>'
+      +'<button data-cn="'+i.id+'" data-tel="'+esc(i.telefone)+'">Copiar número</button>'
+      +'<button data-cm="'+i.id+'">Copiar mensagem</button>'
+      +'<button data-id="'+i.id+'" data-st="enviado">Enviei ✓ (tirar da fila)</button></div>'
+      +'<div class="manuais">'
+      +'<button data-conv="'+i.id+'" data-tel="'+esc(i.telefone)+'">Ver conversa</button>'
+      +'<button data-imp="'+i.id+'">Importar conversa (.txt)</button>'
+      +'<input class="arq" type="file" accept=".txt,text/plain" id="f'+i.id+'" data-tel="'+esc(i.telefone)+'">'
+      +'<span class="salvo" id="i'+i.id+'"></span></div>'
+      +'<div id="conv'+i.id+'"></div>'
+      +'<div class="notabox"><span class="rot">Observação para o Claude</span>'
+      +'<div class="atalhos">'
+      +'<button data-at="'+i.id+'" data-txt="Este número não tem WhatsApp — precisa de outro contato.">sem WhatsApp</button>'
+      +'<button data-at="'+i.id+'" data-txt="Número errado ou de outra pessoa.">número errado</button>'
+      +'<button data-at="'+i.id+'" data-txt="Divergência de cadastro: ">divergência</button>'
+      +'<button data-at="'+i.id+'" data-txt="Refazer a cobrança: ">refazer cobrança</button>'
+      +'<button data-at="'+i.id+'" data-txt="Já pediu rescisão antes.">já pediu rescisão</button>'
+      +'</div>'
+      +'<textarea class="nota" id="n'+i.id+'" placeholder="Ex.: ligar para o polo, ela trocou de número">'+esc(i.nota||'')+'</textarea>'
+      +'<div class="bts"><button data-sn="'+i.id+'">Salvar observação</button><span class="salvo" id="s'+i.id+'"></span></div></div>'
+      +'<div class="bts">'
+      // cartão jurídico não ganha botão de enviar: o texto dele é um resumo para
+      // você, não uma mensagem. Deixar o botão verde ali é convite a acidente.
+      +(soVoce?'':'<button class="ok" data-env="'+i.id+'">Aprovar e enviar pela API</button>')
+      +'<button data-id="'+i.id+'" data-st="meu">'+(soVoce?'Assumi este caso':'Isso é comigo')+'</button>'
+      +'<button class="no" data-id="'+i.id+'" data-st="recusado">Descartar</button></div></div>';
+  };
+  // Agrupa por AÇÃO, na ordem que a API manda. Grupo vazio não aparece.
+  const grupos=r.grupos||[{chave:null,titulo:'Mensagens',dica:''}];
+  L.innerHTML=grupos.map(g=>{
+    const doGrupo=g.chave?r.itens.filter(i=>i.grupo===g.chave):r.itens;
+    if(!doGrupo.length)return '';
+    return '<div class="secao s-'+esc(g.chave||'')+'"><h2>'+esc(g.titulo)
+      +'<span class="conta">'+doGrupo.length+'</span></h2>'
+      +(g.dica?('<div class="dica">'+esc(g.dica)+'</div>'):'')+'</div>'
+      +doGrupo.map(desenharCartao).join('');
+  }).join('');
+  L.querySelectorAll('button[data-id]').forEach(b=>b.addEventListener('click',()=>decidir(b.dataset.id,b.dataset.st)));
+  L.querySelectorAll('button[data-env]').forEach(b=>b.addEventListener('click',()=>enviarAgora(b,b.dataset.env)));
+  L.querySelectorAll('button[data-cn]').forEach(b=>b.addEventListener('click',()=>copiar(b,b.dataset.tel.replace(/\D/g,''))));
+  L.querySelectorAll('button[data-cm]').forEach(b=>b.addEventListener('click',()=>copiar(b,$('t'+b.dataset.cm).value)));
+  L.querySelectorAll('button[data-at]').forEach(b=>b.addEventListener('click',()=>{
+    const c=$('n'+b.dataset.at);
+    c.value=(c.value?c.value.replace(/\s*$/,'')+'\n':'')+b.dataset.txt;
+    c.focus();c.setSelectionRange(c.value.length,c.value.length);
+  }));
+  L.querySelectorAll('button[data-sn]').forEach(b=>b.addEventListener('click',async()=>{
+    const id=b.dataset.sn;
+    const r=await api('nota',{id:Number(id),texto:$('n'+id).value});
+    const s=$('s'+id);
+    if(r&&r.ok){
+      s.textContent='Salvo ✓ — clique em "Avisar o Claude" quando terminar';
+      const c=ULTIMO.itens.find(i=>String(i.id)===String(id));if(c)c.nota=$('n'+id).value;
+      setTimeout(()=>{s.textContent=''},4000);
+    }
+    else alert('Erro: '+((r&&r.erro)||'desconhecido'));
+  }));
+  // Ler a conversa que já está no banco. A data do pedido de cancelamento sai
+  // daqui — do carimbo do próprio WhatsApp —, nunca do que a família diz.
+  L.querySelectorAll('button[data-conv]').forEach(b=>b.addEventListener('click',async()=>{
+    const alvo=$('conv'+b.dataset.conv);
+    if(alvo.innerHTML){alvo.innerHTML='';b.textContent='Ver conversa';return}
+    b.textContent='Carregando...';
+    const r=await api('conversa',{telefone:b.dataset.tel});
+    b.textContent='Esconder conversa';
+    if(!r||!r.ok){alvo.innerHTML='<div class="conversa">Não consegui ler a conversa.</div>';return}
+    if(!r.total){
+      alvo.innerHTML='<div class="conversa">Nenhuma mensagem deste número no sistema.<br><br>'
+        +'O histórico antigo só existe no aplicativo do WhatsApp Business: abra a conversa no celular, toque nos três pontinhos, Mais, <b>Exportar conversa</b>, <b>Sem mídia</b> — e depois use o botão "Importar conversa" aqui do lado.</div>';
+      return;
+    }
+    const marco=r.pedidoRescisao
+      ? '<div class="marco">Primeiro pedido de cancelamento localizado em <b>'+dataBr(r.pedidoRescisao)+'</b> — é esta a data que vale para o cálculo.</div>'
+      : '<div class="marco">Nenhum pedido de cancelamento encontrado neste histórico. Se a família alega ter pedido antes, o registro está fora do que temos: exporte a conversa completa do aplicativo e importe aqui.</div>';
+    const linhas=r.mensagens.map(m=>{
+      const dela=m.direcao==='recebida';
+      const t=(m.texto||'').trim();
+      const chave=dela&&t&&/cancel|rescis|recis|distrat|desist|trancar|n[ãa]o quero mais|n[ãa]o vou mais|n[ãa]o vai mais/i.test(t);
+      const corpo=t?esc(t):('<span class="semtexto">('+esc(m.tipo||'sem texto')+')</span>');
+      return '<div class="msg '+(dela?'dela':'nossa')+(chave?' achado':'')+'">'
+        +'<span class="quando">'+dataBr(m.timestamp_wa)+'</span> '+(dela?'':'<b>nós:</b> ')+corpo+'</div>';
+    }).join('');
+    alvo.innerHTML=marco+'<div class="conversa">'+linhas+'</div>';
+  }));
+  // Importar o .txt exportado do aplicativo, direto no cartão.
+  L.querySelectorAll('button[data-imp]').forEach(b=>b.addEventListener('click',()=>$('f'+b.dataset.imp).click()));
+  L.querySelectorAll('input.arq').forEach(inp=>inp.addEventListener('change',async()=>{
+    const id=inp.id.slice(1);const aviso=$('i'+id);
+    const arq=inp.files&&inp.files[0];if(!arq)return;
+    aviso.textContent='Lendo o arquivo...';
+    const texto=await arq.text();
+    aviso.textContent='Importando...';
+    const r=await api('importar',{telefone:inp.dataset.tel,texto});
+    if(r&&r.ok){
+      aviso.textContent=r.gravadas+' mensagens importadas ('+dataBr(r.de)+' a '+dataBr(r.ate)+')';
+      const bc=document.querySelector('button[data-conv="'+id+'"]');
+      if(bc&&$('conv'+id).innerHTML){$('conv'+id).innerHTML='';bc.click()}
+    } else { aviso.textContent='Erro: '+((r&&r.erro)||'desconhecido') }
+    inp.value='';
+  }));
+  // O texto vai pela área de transferência, não pela URL: o parâmetro ?text= do
+  // wa.me passa pelo handler de protocolo do sistema, que come emoji e acento.
+  L.querySelectorAll('button[data-zap]').forEach(b=>b.addEventListener('click',async()=>{
+    const tel=b.dataset.tel.replace(/\D/g,'');
+    await copiar(b,$('t'+b.dataset.zap).value);
+    window.open('https://wa.me/'+tel,'_blank');
+  }));
+}
+function desenharRecados(recados){
+  const R=$('recados');
+  if(!recados.length){R.innerHTML='<div class="vazio">Nenhum recado ainda.</div>';return}
+  const abertos=recados.filter(x=>x.status==='aberto');
+  const feitos=recados.filter(x=>x.status!=='aberto');
+  const linha=x=>'<div class="rlinha"><div class="rtxt'+(x.status==='aberto'?'':' ok')+'">'+esc(x.texto)
+    +'<div class="rdata">'+dataBr(x.criado_em)+(x.status==='aberto'?'':' · feito')+'</div></div>'
+    +(x.status==='aberto'?('<button data-rf="'+x.id+'">Feito</button>'):'')+'</div>';
+  R.innerHTML='<div style="margin-bottom:8px"><span class="pill">ABERTOS ('+abertos.length+')</span></div>'
+    +(abertos.length?abertos.map(linha).join(''):'<div class="meta" style="padding:8px 0">Nada aberto.</div>')
+    +(feitos.length?('<div style="margin:22px 0 8px"><span class="pill">JÁ FEITOS</span></div>'+feitos.map(linha).join('')):'');
+  R.querySelectorAll('button[data-rf]').forEach(b=>b.addEventListener('click',async()=>{
+    const r=await api('recadoFeito',{id:Number(b.dataset.rf)});
+    if(r&&r.ok)carregar(); else alert('Erro: '+((r&&r.erro)||'desconhecido'));
+  }));
+}
+// Cava o motivo REAL dentro da resposta aninhada (fila -> enviar -> WhatsApp).
+// Antes a tela so mostrava "falha no envio" e sugeria janela de 24h, o que
+// mandou a gente investigar o lado errado: o erro de verdade era texto acima
+// de 1024 caracteres, e estava tres niveis abaixo em error_data.details.
+function motivoDeFalha(r){
+  const p=[];const raso=(r&&r.erro)||'erro desconhecido';p.push(raso);
+  const d=(r&&r.detalhe)||{};
+  if(d.erro&&d.erro!==raso)p.push(d.erro);
+  if(d.parte&&d.de)p.push('Parou na parte '+d.parte+' de '+d.de+(d.jaEntregues?(' — a pessoa JÁ RECEBEU '+d.jaEntregues+'. Não reenvie inteiro.'):''));
+  const e=(d.detalhe&&d.detalhe.error)||d.error;
+  if(e){
+    if(e.error_data&&e.error_data.details)p.push('WhatsApp: '+e.error_data.details);
+    else if(e.message)p.push('WhatsApp: '+e.message);
+  }
+  if(d.semId)p.push('O provedor respondeu mas não devolveu id de mensagem — nada foi entregue.');
+  return p.join('\n\n');
+}
+// aprova e despacha pela API. Se falhar, o cartao volta pra fila com o erro.
+async function enviarAgora(btn,id){
+  const texto=$('t'+id).value;
+  if(!confirm('Enviar esta mensagem AGORA pelo WhatsApp, direto da API?\n\nEla vai sair sem passar pelo seu celular.'))return;
+  const rot=btn.textContent;btn.disabled=true;btn.textContent='Enviando…';
+  const r=await api('enviarAgora',{id:Number(id),texto});
+  const c=$('c'+id);
+  if(r&&r.ok){
+    c.style.opacity=.45;
+    c.querySelector('.bts').innerHTML='<span class="feito">Enviada pela API ✓'+(r.editado?' (com edição)':'')+'</span>';
+    const m=c.querySelectorAll('.manuais');m.forEach(x=>x.remove());
+  }else{
+    btn.disabled=false;btn.textContent=rot;
+    alert('NÃO foi enviada. O cartão continua na fila.\n\n'+motivoDeFalha(r));
+  }
+}
+async function decidir(id,status){
+  const texto=$('t'+id).value;
+  const r=await api('decidir',{id:Number(id),status,texto});
+  const c=$('c'+id);
+  if(r&&r.ok){
+    c.style.opacity=.45;
+    const msg=status==='aprovado'?('Aprovado'+(r.editado?' com edição':'')+' — sai assim que o envio estiver ligado.')
+      :status==='meu'?'Assumido por você.'
+      :status==='enviado'?'Enviada manualmente pelo WhatsApp ✓':'Descartado.';
+    c.querySelector('.bts').innerHTML='<span class="feito">'+msg+'</span>';
+    const m=c.querySelector('.manuais');if(m)m.remove();
+  }else{alert('Erro: '+((r&&r.erro)||'desconhecido'))}
+}
+carregar();
+</script></body></html>
